@@ -12,7 +12,8 @@ Sudokeando is a single-page Sudoku game built with React, TypeScript, and Vite. 
 - Local progress tracking with wins, games played, and best time per difficulty
 - Hint, reset, and in-game timer controls
 - Victory confetti and animated UI transitions
-- PWA setup through `vite-plugin-pwa`
+- Keyboard-accessible controls for difficulty cards, board cells, and actions
+- PWA setup through `vite-plugin-pwa` using shipped SVG assets
 
 ## Tech Stack
 
@@ -48,9 +49,9 @@ The local development server runs on `http://localhost:5173` by default.
 
 ## Current Limitations
 
-- The entire gameplay flow currently lives in `src/App.tsx`, so domain logic and UI are tightly coupled.
-- Several user-facing strings in the application are still in Spanish.
-- Some existing text literals in source files show encoding issues and should be normalized to UTF-8 in a future cleanup pass.
+- The app still relies on browser `confirm()` dialogs for restart and menu-exit flows.
+- Sudoku validation and board generation logic still live in the client application instead of dedicated domain modules.
+- The game currently supports pointer input only on the board itself; direct keyboard navigation between Sudoku cells is not implemented yet.
 
 ## Repository
 

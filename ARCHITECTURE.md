@@ -7,7 +7,12 @@ Sudokeando is a client-side React application with a single entry point and no b
 ## Runtime Structure
 
 - `src/main.tsx`: bootstraps React and mounts the root application.
-- `src/App.tsx`: contains the full application flow, state management, game logic, mascot rendering, and screen components.
+- `src/App.tsx`: coordinates screen state, game lifecycle, puzzle generation, timer, persistence, and top-level handlers.
+- `src/components/Mascot.tsx`: renders the animated robot mascot and live status message.
+- `src/components/HomeScreen.tsx`: renders difficulty selection and progress summary.
+- `src/components/GameScreen.tsx`: renders the Sudoku board, number pad, timer, and in-game actions.
+- `src/lib/game.ts`: stores default stats, localStorage parsing, time formatting, and difficulty labels.
+- `src/types.ts`: shared application types for stats, board cells, difficulty, and screen state.
 - `src/index.css`: defines the visual system, layout, responsive behavior, and component styling.
 - `public/`: static assets exposed by Vite.
 - `vite.config.ts`: Vite configuration plus Progressive Web App registration and manifest metadata.
@@ -23,7 +28,7 @@ The root component stores the active screen in React state and switches views wi
 
 ## State Model
 
-`src/App.tsx` manages all runtime state with React hooks:
+`src/App.tsx` manages runtime state with React hooks:
 
 - `screen`: current view (`home` or `game`)
 - `difficulty`: selected Sudoku difficulty
@@ -58,18 +63,20 @@ When the player enters a value:
 - Storage mechanism: browser `localStorage`
 - Storage key: `sudokeando_stats`
 - Saved data: played count, won count, and best time for each difficulty
+- Parsing strategy: validated through `parseStoredStats()` before hydrating React state
 
 No other client persistence layer exists.
 
 ## UI Composition
 
-The UI is currently implemented in a monolithic file:
+The UI is now split into focused modules:
 
 - `Mascot`: animated SVG robot and speech bubble
 - `HomeScreen`: difficulty selection, play action, and stats summary
 - `GameScreen`: board, keypad, timer, navigation, and helper actions
+- `App`: orchestration, state ownership, and integration logic
 
-This works for the current size of the project, but it is the main architectural hotspot for future refactoring.
+Interactive controls use semantic buttons, visible focus states, and status announcements for basic accessibility support.
 
 ## External Dependencies
 
@@ -90,7 +97,6 @@ This works for the current size of the project, but it is the main architectural
 
 ## Known Technical Debt
 
-- Gameplay logic, UI state, and presentational components are not separated into modules.
-- The project mixes English identifiers with Spanish UI copy.
-- Some strings in the current source appear with broken encoding and should be normalized.
-- The PWA manifest references icon files that should be verified against the contents of `public/`.
+- Restart and exit flows still depend on blocking `window.confirm()` dialogs.
+- Board navigation is click-based; there is no arrow-key movement model for Sudoku cells yet.
+- Game rules and board transformations are still embedded in the React layer rather than a pure game engine module.

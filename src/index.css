@@ -41,6 +41,10 @@ body {
   padding: 20px;
 }
 
+button {
+  font: inherit;
+}
+
 .glass {
   background: var(--panel-bg);
   backdrop-filter: blur(12px);
@@ -86,6 +90,36 @@ h1 {
   filter: drop-shadow(0 10px 24px rgba(0,0,0,0.35));
 }
 
+.mascot-bubble {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #2dd4bf, #0891b2);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  border-radius: 20px;
+  padding: 6px 14px;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  letter-spacing: 0.02em;
+  z-index: 20;
+}
+
+.mascot-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #0891b2;
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
@@ -111,6 +145,7 @@ h1 {
   cursor: pointer;
   transition: all 0.2s;
   border: 2px solid transparent;
+  color: var(--text);
 }
 
 .diff-card.selected {
@@ -119,9 +154,10 @@ h1 {
   transform: translateY(-4px);
 }
 
-.diff-card h3 {
+.diff-card h2 {
   text-transform: capitalize;
   margin-bottom: 4px;
+  font-size: 1rem;
 }
 
 .diff-card p {
@@ -167,6 +203,23 @@ h1 {
   font-size: 0.85rem;
 }
 
+.stats-heading {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-copy {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.stat-strong {
+  font-weight: 800;
+}
+
 /* Game Header */
 .game-header {
   display: flex;
@@ -203,14 +256,12 @@ h1 {
 .cell {
   background: var(--cell-bg);
   border: 0.5px solid var(--border);
-  display: flex;
-  justify-content: center;
-  align-items: center;
   font-size: 1.5rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.1s ease;
   user-select: none;
+  color: inherit;
 }
 
 .cell:nth-child(3n) { border-right: 2px solid var(--secondary); }
@@ -226,6 +277,14 @@ h1 {
 .cell.error { color: var(--error); background: rgba(239, 68, 68, 0.15); }
 .cell.initial { color: rgba(255, 255, 255, 0.9); }
 .cell.user-input { color: var(--primary); }
+.cell:focus-visible,
+.diff-card:focus-visible,
+.num-btn:focus-visible,
+.action-btn:focus-visible,
+.back-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
 
 /* Controls */
 .num-pad {
@@ -290,9 +349,30 @@ h1 {
 /* Timer */
 .timer { font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
 
+.difficulty-tag {
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--secondary);
+}
+
 /* Responsive tweaks */
 @media (max-width: 400px) {
   .cell { font-size: 1.2rem; }
   .num-btn { padding: 8px; font-size: 1.1rem; }
   .mascot-large { width: 140px; height: 140px; }
+  .mascot-bubble {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-svg {
+    animation: none;
+  }
+
+  .diff-card.selected,
+  .action-btn:hover {
+    transform: none;
+  }
 }
