@@ -1,54 +1,57 @@
-# 🧩 Sudokeando
+# Sudokeando
 
-**Sudokeando** es una aplicación de Sudoku moderna, rápida y diseñada para ser extremadamente divertida. Olvida los tableros grises y aburridos; aquí tienes una interfaz vibrante, animada y una mascota robótica que te acompaña en cada jugada.
+Sudokeando is a single-page Sudoku game built with React, TypeScript, and Vite. It combines a mobile-friendly board, animated transitions, persistent local stats, and a reactive robot mascot to make Sudoku feel more playful than a standard puzzle app.
 
-![Sudokeando Preview](https://raw.githubusercontent.com/gafapa/sudokeando/main/public/preview.png) *(Nota: Imagen de ejemplo, se recomienda subir una captura real)*
+![Sudokeando Preview](https://raw.githubusercontent.com/gafapa/sudokeando/main/public/preview.png)
 
-## ✨ Características Principales
+## Features
 
--   **🎨 Interfaz de Doble Pantalla**:
-    -   **Home / Menú**: Revisa tus logros, mejores tiempos y selecciona tu próximo reto.
-    -   **Game Screen**: Un tablero limpio y fluido diseñado para la máxima concentración.
--   **🤖 Mascota Robot Reactiva**: Un robot SVG dinámico que reacciona a tus acciones en tiempo real:
-    -   **Pensando...** cuando seleccionas una celda.
-    -   **¡Bien!** cuando aciertas.
-    -   **¡Ups!** cuando cometes un error.
-    -   **¡Celebración!** cuando completas el tablero.
--   **🏆 Sistema de Logros**: Seguimiento automático de tus victorias y récords personales en cada nivel de dificultad.
--   **⚡ 4 Niveles de Dificultad**: Desde *Fácil* (para relajarse) hasta *Experto* (solo para leyendas del Sudoku).
--   **📱 Diseño Responsivo**: Juega perfectamente en móvil, tablet o escritorio.
+- Four difficulty levels: `easy`, `medium`, `hard`, and `expert`
+- Two-screen flow: home screen and in-game screen
+- Reactive SVG mascot with contextual status messages
+- Local progress tracking with wins, games played, and best time per difficulty
+- Hint, reset, and in-game timer controls
+- Victory confetti and animated UI transitions
+- PWA setup through `vite-plugin-pwa`
 
-## 🛠️ Tecnologías Utilizadas
+## Tech Stack
 
--   **React 18** + **TypeScript**
--   **Vite** (Build tool ultra rápido)
--   **Framer Motion** (Animaciones fluidas y transiciones de pantalla)
--   **Lucide React** (Iconografía moderna)
--   **sudoku-gen** (Generación inteligente de tableros)
--   **Canvas Confetti** (Efectos visuales de victoria)
+- React 19
+- TypeScript 5
+- Vite 8
+- Framer Motion
+- Lucide React
+- sudoku-gen
+- canvas-confetti
+- vite-plugin-pwa
 
-## 🚀 Instalación y Ejecución
+## Getting Started
 
-Si quieres probar Sudokeando en tu máquina local, sigue estos pasos:
+```bash
+npm install
+npm run dev
+```
 
-1.  **Clona el repositorio**:
-    ```bash
-    git clone https://github.com/gafapa/sudokeando.git
-    cd sudokeando
-    ```
+The local development server runs on `http://localhost:5173` by default.
 
-2.  **Instala las dependencias**:
-    ```bash
-    npm install
-    ```
+## Available Scripts
 
-3.  **Inicia el servidor de desarrollo**:
-    ```bash
-    npm run dev
-    ```
+- `npm run dev`: start the Vite development server
+- `npm run build`: run TypeScript project build and create a production bundle
+- `npm run lint`: run ESLint
+- `npm run preview`: preview the production build locally
 
-4.  Abre tu navegador en `http://localhost:5173`.
+## Project Documentation
 
----
+- [ARCHITECTURE.md](./ARCHITECTURE.md): current application structure and runtime behavior
+- [RULES.md](./RULES.md): repository conventions for code and documentation changes
 
-Desarrollado con ❤️ por el equipo de **Sudokeando**.
+## Current Limitations
+
+- The entire gameplay flow currently lives in `src/App.tsx`, so domain logic and UI are tightly coupled.
+- Several user-facing strings in the application are still in Spanish.
+- Some existing text literals in source files show encoding issues and should be normalized to UTF-8 in a future cleanup pass.
+
+## Repository
+
+- Remote: [https://github.com/gafapa/sudokeando](https://github.com/gafapa/sudokeando)
