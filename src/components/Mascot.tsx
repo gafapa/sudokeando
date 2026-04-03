@@ -1,20 +1,13 @@
 import { motion } from 'framer-motion'
 import type { MascotStatus } from '../types'
 
-const MESSAGES: Record<MascotStatus, string> = {
-  idle: "Let's play!",
-  happy: 'Correct!',
-  thinking: 'Thinking...',
-  oops: 'That one does not fit.',
-  win: 'You solved it!',
-}
-
 interface MascotProps {
   status: MascotStatus
   className?: string
+  message: string
 }
 
-export function Mascot({ status, className = '' }: MascotProps) {
+export function Mascot({ status, className = '', message }: MascotProps) {
   const isSmall = className.includes('mascot-small')
   const armColor = status === 'oops' ? '#ef4444' : status === 'win' ? '#f472b6' : 'var(--secondary)'
   const size = isSmall ? 80 : 180
@@ -23,7 +16,7 @@ export function Mascot({ status, className = '' }: MascotProps) {
     const screenBackground = {
       idle: 'rgba(45, 212, 191, 0.15)',
       happy: 'rgba(16, 185, 129, 0.2)',
-      thinking: 'rgba(139, 92, 246, 0.2)',
+      thinking: 'rgba(245, 158, 11, 0.2)',
       oops: 'rgba(239, 68, 68, 0.2)',
       win: 'rgba(244, 114, 182, 0.25)',
     }[status]
@@ -43,7 +36,9 @@ export function Mascot({ status, className = '' }: MascotProps) {
               ? 'rgba(239,68,68,0.5)'
               : status === 'win'
                 ? 'rgba(244,114,182,0.6)'
-                : 'rgba(45,212,191,0.3)'
+                : status === 'thinking'
+                  ? 'rgba(245,158,11,0.45)'
+                  : 'rgba(45,212,191,0.3)'
           }
           strokeWidth="1.5"
         />
@@ -68,12 +63,12 @@ export function Mascot({ status, className = '' }: MascotProps) {
       case 'thinking':
         return (
           <>
-            <circle cx="42" cy="46" r="6" fill="none" stroke="#8b5cf6" strokeWidth="2.5" />
-            <circle cx="42" cy="46" r="3" fill="#8b5cf6" opacity="0.8" />
-            <rect x="72" y="43" width="12" height="5" rx="2.5" fill="#8b5cf6" opacity="0.8" />
-            <circle cx="78" cy="35" r="1.5" fill="#8b5cf6" opacity="0.6" />
-            <circle cx="83" cy="31" r="2" fill="#8b5cf6" opacity="0.8" />
-            <circle cx="89" cy="26" r="2.5" fill="#8b5cf6" />
+            <circle cx="42" cy="46" r="6" fill="none" stroke="#f59e0b" strokeWidth="2.5" />
+            <circle cx="42" cy="46" r="3" fill="#f59e0b" opacity="0.8" />
+            <rect x="72" y="43" width="12" height="5" rx="2.5" fill="#f59e0b" opacity="0.8" />
+            <circle cx="78" cy="35" r="1.5" fill="#f59e0b" opacity="0.6" />
+            <circle cx="83" cy="31" r="2" fill="#f59e0b" opacity="0.8" />
+            <circle cx="89" cy="26" r="2.5" fill="#f59e0b" />
           </>
         )
       case 'oops':
@@ -127,7 +122,7 @@ export function Mascot({ status, className = '' }: MascotProps) {
       case 'oops':
         return <path d="M48 68 Q60 60 72 68" stroke="#ef4444" strokeWidth="2.5" fill="none" strokeLinecap="round" />
       case 'thinking':
-        return <path d="M50 64 Q55 68 62 64 Q68 61 74 64" stroke="#8b5cf6" strokeWidth="2" fill="none" strokeLinecap="round" />
+        return <path d="M50 64 Q55 68 62 64 Q68 61 74 64" stroke="#f59e0b" strokeWidth="2" fill="none" strokeLinecap="round" />
       default:
         return <path d="M50 65 Q60 70 70 65" stroke="#2dd4bf" strokeWidth="2" fill="none" strokeLinecap="round" opacity="0.7" />
     }
@@ -136,7 +131,7 @@ export function Mascot({ status, className = '' }: MascotProps) {
   return (
     <div className={`mascot-wrapper ${className}`} style={{ position: 'relative', width: size, height: size + 28 }}>
       <div className="mascot-bubble" role="status" aria-live="polite">
-        {MESSAGES[status]}
+        {message}
       </div>
 
       <svg
@@ -150,11 +145,11 @@ export function Mascot({ status, className = '' }: MascotProps) {
       >
         <defs>
           <linearGradient id={`bodyGrad-${status}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={status === 'oops' ? '#7f1d1d' : status === 'win' ? '#581c87' : '#1e1b4b'} />
-            <stop offset="100%" stopColor={status === 'oops' ? '#450a0a' : status === 'win' ? '#2e1065' : '#0f172a'} />
+            <stop offset="0%" stopColor={status === 'oops' ? '#7f1d1d' : status === 'win' ? '#581c87' : '#17324f'} />
+            <stop offset="100%" stopColor={status === 'oops' ? '#450a0a' : status === 'win' ? '#2e1065' : '#0a1827'} />
           </linearGradient>
           <linearGradient id={`faceGrad-${status}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={status === 'oops' ? '#ef4444' : status === 'win' ? '#a855f7' : '#8b5cf6'} />
+            <stop offset="0%" stopColor={status === 'oops' ? '#ef4444' : status === 'win' ? '#a855f7' : status === 'thinking' ? '#f59e0b' : '#0ea5e9'} />
             <stop offset="100%" stopColor={status === 'oops' ? '#dc2626' : status === 'win' ? '#f472b6' : '#2dd4bf'} />
           </linearGradient>
           <filter id={`glow-${status}`}>
@@ -184,7 +179,7 @@ export function Mascot({ status, className = '' }: MascotProps) {
           cx="60"
           cy="4"
           r="4"
-          fill={status === 'oops' ? '#ef4444' : status === 'win' ? '#f472b6' : '#2dd4bf'}
+          fill={status === 'oops' ? '#ef4444' : status === 'win' ? '#f472b6' : status === 'thinking' ? '#f59e0b' : '#2dd4bf'}
           filter={`url(#glow-${status})`}
           animate={{ r: [3.5, 5, 3.5], opacity: [0.8, 1, 0.8] }}
           transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5, ease: 'easeInOut' }}

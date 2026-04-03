@@ -12,6 +12,7 @@ Sudokeando is a client-side React application with a single entry point and no b
 - `src/components/HomeScreen.tsx`: renders difficulty selection and progress summary.
 - `src/components/GameScreen.tsx`: renders the Sudoku board, number pad, timer, and in-game actions.
 - `src/lib/game.ts`: stores default stats, localStorage parsing, time formatting, and difficulty labels.
+- `src/lib/i18n.ts`: stores translated copy, supported languages, and theme/language storage keys.
 - `src/types.ts`: shared application types for stats, board cells, difficulty, and screen state.
 - `src/index.css`: defines the visual system, layout, responsive behavior, and component styling.
 - `public/`: static assets exposed by Vite.
@@ -39,6 +40,8 @@ The root component stores the active screen in React state and switches views wi
 - `gameActive`: whether input and timer are enabled
 - `stats`: aggregate local stats by difficulty
 - `mascotStatus`: mascot animation and message state
+- `language`: active UI locale
+- `theme`: active color theme (`dark` or `light`)
 
 ## Sudoku Data Flow
 
@@ -62,6 +65,7 @@ When the player enters a value:
 
 - Storage mechanism: browser `localStorage`
 - Storage key: `sudokeando_stats`
+- Additional keys: `sudokeando_language`, `sudokeando_theme`
 - Saved data: played count, won count, and best time for each difficulty
 - Parsing strategy: validated through `parseStoredStats()` before hydrating React state
 
@@ -72,11 +76,12 @@ No other client persistence layer exists.
 The UI is now split into focused modules:
 
 - `Mascot`: animated SVG robot and speech bubble
-- `HomeScreen`: difficulty selection, play action, and stats summary
-- `GameScreen`: board, keypad, timer, navigation, and helper actions
+- `HomeScreen`: redesigned landing page, theme/language controls, difficulty selection, and progress summary
+- `GameScreen`: board, keypad, timer, navigation, and compact theme/language controls
 - `App`: orchestration, state ownership, and integration logic
 
 Interactive controls use semantic buttons, visible focus states, and status announcements for basic accessibility support.
+Theme selection is applied through `document.documentElement.dataset.theme`, and translated copy is resolved from a local dictionary layer.
 
 ## External Dependencies
 

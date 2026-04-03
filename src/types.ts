@@ -4,6 +4,10 @@ export type Screen = 'home' | 'game'
 
 export type MascotStatus = 'idle' | 'happy' | 'thinking' | 'oops' | 'win'
 
+export type Theme = 'dark' | 'light'
+
+export type Language = 'es' | 'gl' | 'en' | 'fr' | 'de' | 'pt' | 'ca' | 'eu'
+
 export interface DifficultyStats {
   played: number
   won: number

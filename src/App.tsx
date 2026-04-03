@@ -4,19 +4,20 @@ import { AnimatePresence, useReducedMotion } from 'framer-motion'
 import { getSudoku } from 'sudoku-gen'
 import { GameScreen } from './components/GameScreen'
 import { HomeScreen } from './components/HomeScreen'
+import { DEFAULT_STATS, STORAGE_KEY_STATS, formatTime, parseStoredStats } from './lib/game'
 import {
-  DEFAULT_STATS,
-  STORAGE_KEY_STATS,
-  formatTime,
-  getDifficultyLabel,
-  parseStoredStats,
-} from './lib/game'
+  getTranslation,
+  STORAGE_KEY_LANGUAGE,
+  STORAGE_KEY_THEME,
+} from './lib/i18n'
 import type {
   Difficulty,
   GameStats,
+  Language,
   MascotStatus,
   PuzzleCell,
   Screen,
+  Theme,
 } from './types'
 
 function createBoard(puzzle: string): PuzzleCell[][] {
@@ -42,6 +43,38 @@ function getInitialStats(): GameStats {
   return parseStoredStats(window.localStorage.getItem(STORAGE_KEY_STATS))
 }
 
+function getInitialLanguage(): Language {
+  if (typeof window === 'undefined') {
+    return 'es'
+  }
+
+  const storedLanguage = window.localStorage.getItem(STORAGE_KEY_LANGUAGE)
+  return storedLanguage === 'es' ||
+    storedLanguage === 'gl' ||
+    storedLanguage === 'en' ||
+    storedLanguage === 'fr' ||
+    storedLanguage === 'de' ||
+    storedLanguage === 'pt' ||
+    storedLanguage === 'ca' ||
+    storedLanguage === 'eu'
+    ? storedLanguage
+    : 'es'
+}
+
+function getInitialTheme(): Theme {
+  if (typeof window === 'undefined') {
+    return 'dark'
+  }
+
+  const storedTheme = window.localStorage.getItem(STORAGE_KEY_THEME)
+
+  if (storedTheme === 'dark' || storedTheme === 'light') {
+    return storedTheme
+  }
+
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
+
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
@@ -52,11 +85,24 @@ export default function App() {
   const [gameActive, setGameActive] = useState(false)
   const [stats, setStats] = useState<GameStats>(getInitialStats)
   const [mascotStatus, setMascotStatus] = useState<MascotStatus>('idle')
+  const [language, setLanguage] = useState<Language>(getInitialLanguage)
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const prefersReducedMotion = useReducedMotion()
+  const translation = getTranslation(language)
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(stats))
   }, [stats])
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY_LANGUAGE, language)
+    document.documentElement.lang = language
+  }, [language])
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY_THEME, theme)
+    document.documentElement.dataset.theme = theme
+  }, [theme])
 
   useEffect(() => {
     if (!gameActive || screen !== 'game') {
@@ -171,30 +217,14 @@ export default function App() {
     }
   }
 
-  function handleHint() {
-    if (!selectedCell || !gameActive) {
-      return
-    }
-
-    const [rowIndex, columnIndex] = selectedCell
-    const cell = board[rowIndex]?.[columnIndex]
-
-    if (!cell || (cell.value !== null && !cell.error)) {
-      return
-    }
-
-    const correctValue = Number.parseInt(solution[rowIndex * 9 + columnIndex], 10)
-    handleInput(correctValue)
-  }
-
   function handleRestart() {
-    if (window.confirm('Restart the current game?')) {
+    if (window.confirm(translation.restartConfirm)) {
       startNewGame()
     }
   }
 
   function handleBackToMenu() {
-    if (gameActive && !window.confirm('Return to the menu? Current progress will be lost.')) {
+    if (gameActive && !window.confirm(translation.leaveConfirm)) {
       return
     }
 
@@ -204,18 +234,25 @@ export default function App() {
     setMascotStatus('idle')
   }
 
+  function toggleTheme() {
+    setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'))
+  }
+
   return (
-    <main className="app-container">
+    <main className="app-shell">
       <AnimatePresence mode="wait">
         {screen === 'home' ? (
           <HomeScreen
             key="home"
             difficulty={difficulty}
+            language={language}
             onDifficultyChange={setDifficulty}
+            onLanguageChange={setLanguage}
             onPlay={() => startNewGame(difficulty)}
-            formatTime={formatTime}
-            getDifficultyLabel={getDifficultyLabel}
+            onThemeToggle={toggleTheme}
             stats={stats}
+            theme={theme}
+            translation={translation}
           />
         ) : (
           <GameScreen
@@ -223,15 +260,18 @@ export default function App() {
             board={board}
             difficulty={difficulty}
             formatTime={formatTime}
-            gameLabel={getDifficultyLabel(difficulty)}
+            language={language}
             mascotStatus={mascotStatus}
             onBack={handleBackToMenu}
             onCellClick={handleCellClick}
-            onHint={handleHint}
             onInput={handleInput}
+            onLanguageChange={setLanguage}
             onRestart={handleRestart}
+            onThemeToggle={toggleTheme}
             selectedCell={selectedCell}
+            theme={theme}
             timer={timer}
+            translation={translation}
           />
         )}
       </AnimatePresence>

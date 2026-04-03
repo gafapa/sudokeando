@@ -8,9 +8,11 @@ Sudokeando is a single-page Sudoku game built with React, TypeScript, and Vite. 
 
 - Four difficulty levels: `easy`, `medium`, `hard`, and `expert`
 - Two-screen flow: home screen and in-game screen
-- Reactive SVG mascot with contextual status messages
+- Reactive SVG mascot with humorous commentary instead of gameplay hints
 - Local progress tracking with wins, games played, and best time per difficulty
-- Hint, reset, and in-game timer controls
+- Light and dark theme toggle persisted in local storage
+- Internationalized interface for Spanish, Galician, English, French, German, Portuguese, Catalan, and Basque
+- Reset and in-game timer controls
 - Victory confetti and animated UI transitions
 - Keyboard-accessible controls for difficulty cards, board cells, and actions
 - PWA setup through `vite-plugin-pwa` using shipped SVG assets
