@@ -1,15 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import confetti from 'canvas-confetti'
-import { AnimatePresence, useReducedMotion } from 'framer-motion'
-import { getSudoku } from 'sudoku-gen'
+import { AnimatePresence, MotionConfig, useReducedMotion } from 'framer-motion'
 import { GameScreen } from './components/GameScreen'
 import { HomeScreen } from './components/HomeScreen'
-import { DEFAULT_STATS, STORAGE_KEY_STATS, formatTime, parseStoredStats } from './lib/game'
+import { parseStoredStats, STORAGE_KEY_STATS, formatTime, createBoard, getSolutionValue, isBoardComplete, markSolutionErrors, isSolvedBoard, getElapsedSeconds } from './lib/game'
+import { readPreference, writePreference, updateStats } from './lib/storage'
+import type { StatsEvent } from './lib/storage'
+import { feedback } from './lib/i18n'
 import {
   getTranslation,
   STORAGE_KEY_LANGUAGE,
   STORAGE_KEY_THEME,
 } from './lib/i18n'
+import {
+  getEasyHintComment,
+  getFinalErrorComment,
+  getFixedCellComment,
+  getMascotComment,
+} from './lib/mascot'
+import { createSudokuForDifficulty } from './lib/sudoku'
 import type {
   Difficulty,
   GameStats,
@@ -20,35 +29,12 @@ import type {
   Theme,
 } from './types'
 
-function createBoard(puzzle: string): PuzzleCell[][] {
-  return Array.from({ length: 9 }, (_, rowIndex) =>
-    Array.from({ length: 9 }, (_, columnIndex) => {
-      const rawValue = puzzle[rowIndex * 9 + columnIndex]
-      const value = rawValue === '-' ? null : Number.parseInt(rawValue, 10)
-
-      return {
-        value,
-        initial: value !== null,
-        error: false,
-      }
-    }),
-  )
-}
-
-function getInitialStats(): GameStats {
-  if (typeof window === 'undefined') {
-    return DEFAULT_STATS
-  }
-
-  return parseStoredStats(window.localStorage.getItem(STORAGE_KEY_STATS))
-}
-
 function getInitialLanguage(): Language {
   if (typeof window === 'undefined') {
     return 'es'
   }
 
-  const storedLanguage = window.localStorage.getItem(STORAGE_KEY_LANGUAGE)
+  const storedLanguage = readPreference(STORAGE_KEY_LANGUAGE)
   return storedLanguage === 'es' ||
     storedLanguage === 'gl' ||
     storedLanguage === 'en' ||
@@ -66,13 +52,13 @@ function getInitialTheme(): Theme {
     return 'dark'
   }
 
-  const storedTheme = window.localStorage.getItem(STORAGE_KEY_THEME)
+  const storedTheme = readPreference(STORAGE_KEY_THEME)
 
   if (storedTheme === 'dark' || storedTheme === 'light') {
     return storedTheme
   }
 
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
 }
 
 export default function App() {
@@ -83,24 +69,48 @@ export default function App() {
   const [selectedCell, setSelectedCell] = useState<[number, number] | null>(null)
   const [timer, setTimer] = useState(0)
   const [gameActive, setGameActive] = useState(false)
-  const [stats, setStats] = useState<GameStats>(getInitialStats)
-  const [mascotStatus, setMascotStatus] = useState<MascotStatus>('idle')
+  const [stats, setStats] = useState<GameStats>(() => parseStoredStats(readPreference(STORAGE_KEY_STATS)))
+  const [storageFailed, setStorageFailed] = useState(false)
+  const [generationFailed, setGenerationFailed] = useState(false)
+  const startedAt = useRef(0)
+  const gameId = useRef<string | null>(null)
   const [language, setLanguage] = useState<Language>(getInitialLanguage)
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
+  const [mascotStatus, setMascotStatus] = useState<MascotStatus>('idle')
+  const [mascotMessage, setMascotMessage] = useState(() =>
+    getMascotComment(language, 'idle'),
+  )
   const prefersReducedMotion = useReducedMotion()
   const translation = getTranslation(language)
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(stats))
-  }, [stats])
+    let active = true
+    const refresh = () => {
+      void updateStats().then((saved) => { if (active) setStats(saved) })
+        .catch(() => { if (active) setStorageFailed(true) })
+    }
+    let channel: BroadcastChannel | null = null
+    try {
+      if (typeof BroadcastChannel !== 'undefined') channel = new BroadcastChannel('sudokeando_stats')
+    } catch { /* Focus refresh remains available if cross-tab messaging is blocked. */ }
+    if (channel) channel.onmessage = refresh
+    window.addEventListener('focus', refresh)
+    window.addEventListener('sudokeando-stats', refresh)
+    refresh()
+    return () => {
+      active = false
+      channel?.close()
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('sudokeando-stats', refresh)
+    }
+  }, [])
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY_LANGUAGE, language)
     document.documentElement.lang = language
-  }, [language])
+    document.title = translation.appTitle
+  }, [language, translation.appTitle])
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY_THEME, theme)
     document.documentElement.dataset.theme = theme
   }, [theme])
 
@@ -110,14 +120,44 @@ export default function App() {
     }
 
     const intervalId = window.setInterval(() => {
-      setTimer((currentTimer) => currentTimer + 1)
+      setTimer(getElapsedSeconds(startedAt.current))
     }, 1000)
 
     return () => window.clearInterval(intervalId)
   }, [gameActive, screen])
 
+  function recordStats(event: StatsEvent) {
+    void updateStats(event).then((saved) => {
+      setStats(saved)
+      window.dispatchEvent(new Event('sudokeando-stats'))
+      try {
+        if (typeof BroadcastChannel !== 'undefined') {
+          const channel = new BroadcastChannel('sudokeando_stats')
+          channel.postMessage('changed')
+          channel.close()
+        }
+      } catch { /* Other tabs also refresh their statistics when focused. */ }
+    }).catch(() => {
+      setStorageFailed(true)
+      setStats((current) => {
+        const level = current[event.difficulty]
+        return { ...current, [event.difficulty]: {
+          played: level.played + (event.elapsed === undefined ? 1 : 0),
+          won: level.won + (event.elapsed === undefined ? 0 : 1),
+          bestTime: event.elapsed === undefined ? level.bestTime : Math.min(level.bestTime ?? event.elapsed, event.elapsed),
+        } }
+      })
+    })
+  }
+
   function startNewGame(nextDifficulty: Difficulty = difficulty) {
-    const puzzle = getSudoku(nextDifficulty)
+    let puzzle
+    try { puzzle = createSudokuForDifficulty(nextDifficulty) }
+    catch { setGenerationFailed(true); return }
+    setGenerationFailed(false)
+    startedAt.current = Date.now()
+    gameId.current = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() :
+      Array.from(crypto.getRandomValues(new Uint8Array(16)), (value) => value.toString(16).padStart(2, '0')).join('')
 
     setBoard(createBoard(puzzle.puzzle))
     setSolution(puzzle.solution)
@@ -125,15 +165,10 @@ export default function App() {
     setTimer(0)
     setGameActive(true)
     setMascotStatus('idle')
+    setMascotMessage(getMascotComment(language, 'idle'))
     setSelectedCell(null)
     setScreen('game')
-    setStats((currentStats) => ({
-      ...currentStats,
-      [nextDifficulty]: {
-        ...currentStats[nextDifficulty],
-        played: currentStats[nextDifficulty].played + 1,
-      },
-    }))
+    recordStats({ gameId: gameId.current, difficulty: nextDifficulty })
   }
 
   function handleCellClick(rowIndex: number, columnIndex: number) {
@@ -141,40 +176,46 @@ export default function App() {
       return
     }
 
+    const cell = board[rowIndex]?.[columnIndex]
+    const correctValue = getSolutionValue(solution, rowIndex, columnIndex)
+
     setSelectedCell([rowIndex, columnIndex])
     setMascotStatus('thinking')
+
+    if (difficulty === 'easy' && cell && !cell.initial && cell.value === null && correctValue !== null) {
+      setMascotMessage(getEasyHintComment(language, rowIndex, columnIndex, correctValue))
+      return
+    }
+
+    setMascotMessage(
+      cell?.initial ? getFixedCellComment(language) : getMascotComment(language, 'thinking'),
+    )
   }
 
   function handleWin() {
+    const completedId = gameId.current
+    if (!completedId) return
+    gameId.current = null
+    const elapsed = getElapsedSeconds(startedAt.current)
+    setTimer(elapsed)
     setGameActive(false)
     setMascotStatus('win')
+    setMascotMessage(getMascotComment(language, 'win'))
+    recordStats({ gameId: completedId, difficulty, elapsed })
 
     if (!prefersReducedMotion) {
-      confetti({
+      try { confetti({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
         colors: ['#2dd4bf', '#8b5cf6', '#f472b6'],
-      })
+      }) } catch { /* Decorative effects must not interrupt a completed game. */ }
     }
 
-    setStats((currentStats) => {
-      const currentBestTime = currentStats[difficulty].bestTime
-
-      return {
-        ...currentStats,
-        [difficulty]: {
-          ...currentStats[difficulty],
-          won: currentStats[difficulty].won + 1,
-          bestTime:
-            currentBestTime === null || timer < currentBestTime ? timer : currentBestTime,
-        },
-      }
-    })
   }
 
   function handleInput(value: number | null) {
-    if (!selectedCell || !gameActive) {
+    if (!selectedCell || !gameActive || !gameId.current || (value !== null && (!Number.isInteger(value) || value < 1 || value > 9))) {
       return
     }
 
@@ -185,36 +226,36 @@ export default function App() {
       return
     }
 
-    const updatedBoard = board.map((row) => row.map((currentCell) => ({ ...currentCell })))
+    const updatedBoard = board.map((row) => row.map((currentCell) => ({ ...currentCell, error: false })))
 
     if (value === null) {
       updatedBoard[rowIndex][columnIndex].value = null
       updatedBoard[rowIndex][columnIndex].error = false
       setBoard(updatedBoard)
       setMascotStatus('idle')
+      setMascotMessage(getMascotComment(language, 'idle'))
       return
     }
 
-    const correctValue = Number.parseInt(solution[rowIndex * 9 + columnIndex], 10)
-    const isError = value !== correctValue
-
     updatedBoard[rowIndex][columnIndex].value = value
-    updatedBoard[rowIndex][columnIndex].error = isError
+    updatedBoard[rowIndex][columnIndex].error = false
 
-    setBoard(updatedBoard)
-    setMascotStatus(isError ? 'oops' : 'happy')
-
-    const isWin = updatedBoard.every((row, currentRowIndex) =>
-      row.every(
-        (currentCell, currentColumnIndex) =>
-          currentCell.value ===
-          Number.parseInt(solution[currentRowIndex * 9 + currentColumnIndex], 10),
-      ),
-    )
-
-    if (isWin) {
-      handleWin()
+    if (!isBoardComplete(updatedBoard)) {
+      setBoard(updatedBoard)
+      setMascotStatus('thinking')
+      setMascotMessage(getMascotComment(language, 'thinking'))
+      return
     }
+
+    if (isSolvedBoard(updatedBoard, solution)) {
+      setBoard(updatedBoard)
+      handleWin()
+      return
+    }
+
+    setBoard(markSolutionErrors(updatedBoard, solution))
+    setMascotStatus('oops')
+    setMascotMessage(getFinalErrorComment(language))
   }
 
   function handleRestart() {
@@ -230,16 +271,37 @@ export default function App() {
 
     setScreen('home')
     setGameActive(false)
+    gameId.current = null
     setSelectedCell(null)
     setMascotStatus('idle')
+    setMascotMessage(getMascotComment(language, 'idle'))
   }
 
   function toggleTheme() {
-    setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'))
+    const nextTheme = theme === 'dark' ? 'light' : 'dark'
+    if (!writePreference(STORAGE_KEY_THEME, nextTheme)) setStorageFailed(true)
+    setTheme(nextTheme)
+  }
+
+  function handleLanguageChange(nextLanguage: Language) {
+    if (!writePreference(STORAGE_KEY_LANGUAGE, nextLanguage)) setStorageFailed(true)
+    setLanguage(nextLanguage)
+    const cell = selectedCell && board[selectedCell[0]]?.[selectedCell[1]]
+    if (gameActive && selectedCell && cell && !cell.initial && cell.value === null && difficulty === 'easy') {
+      const value = getSolutionValue(solution, ...selectedCell)
+      if (value !== null) {
+        setMascotMessage(getEasyHintComment(nextLanguage, ...selectedCell, value))
+        return
+      }
+    }
+    setMascotMessage(getMascotComment(nextLanguage, mascotStatus))
   }
 
   return (
+    <MotionConfig reducedMotion="user">
     <main className="app-shell">
+      {storageFailed && <p className="notice" role="status">{feedback[language].storage}</p>}
+      {generationFailed && <p className="notice" role="alert">{feedback[language].generation}</p>}
       <AnimatePresence mode="wait">
         {screen === 'home' ? (
           <HomeScreen
@@ -247,7 +309,7 @@ export default function App() {
             difficulty={difficulty}
             language={language}
             onDifficultyChange={setDifficulty}
-            onLanguageChange={setLanguage}
+            onLanguageChange={handleLanguageChange}
             onPlay={() => startNewGame(difficulty)}
             onThemeToggle={toggleTheme}
             stats={stats}
@@ -261,11 +323,12 @@ export default function App() {
             difficulty={difficulty}
             formatTime={formatTime}
             language={language}
+            mascotMessage={mascotMessage}
             mascotStatus={mascotStatus}
             onBack={handleBackToMenu}
             onCellClick={handleCellClick}
             onInput={handleInput}
-            onLanguageChange={setLanguage}
+            onLanguageChange={handleLanguageChange}
             onRestart={handleRestart}
             onThemeToggle={toggleTheme}
             selectedCell={selectedCell}
@@ -276,5 +339,6 @@ export default function App() {
         )}
       </AnimatePresence>
     </main>
+    </MotionConfig>
   )
 }

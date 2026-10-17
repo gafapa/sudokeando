@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import type { MascotStatus } from '../types'
 
 interface MascotProps {
@@ -8,6 +8,7 @@ interface MascotProps {
 }
 
 export function Mascot({ status, className = '', message }: MascotProps) {
+  const reducedMotion = useReducedMotion()
   const isSmall = className.includes('mascot-small')
   const armColor = status === 'oops' ? '#ef4444' : status === 'win' ? '#f472b6' : 'var(--secondary)'
   const size = isSmall ? 80 : 180
@@ -179,15 +180,16 @@ export function Mascot({ status, className = '', message }: MascotProps) {
           cx="60"
           cy="4"
           r="4"
+          opacity="1"
           fill={status === 'oops' ? '#ef4444' : status === 'win' ? '#f472b6' : status === 'thinking' ? '#f59e0b' : '#2dd4bf'}
           filter={`url(#glow-${status})`}
-          animate={{ r: [3.5, 5, 3.5], opacity: [0.8, 1, 0.8] }}
+          animate={reducedMotion ? { r: 4, opacity: 1 } : { r: [3.5, 5, 3.5], opacity: [0.8, 1, 0.8] }}
           transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5, ease: 'easeInOut' }}
         />
 
         <motion.g
           style={{ transformOrigin: '22px 62px' }}
-          animate={{ rotate: status === 'win' ? [-25, 0, -25] : status === 'oops' ? [5, -5, 5] : 0 }}
+          animate={{ rotate: reducedMotion ? 0 : status === 'win' ? [-25, 0, -25] : status === 'oops' ? [5, -5, 5] : 0 }}
           transition={{ repeat: Number.POSITIVE_INFINITY, duration: status === 'win' ? 0.4 : 1.2 }}
         >
           <rect x="8" y="48" width="14" height="28" rx="7" fill={`url(#bodyGrad-${status})`} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
@@ -196,7 +198,7 @@ export function Mascot({ status, className = '', message }: MascotProps) {
         </motion.g>
         <motion.g
           style={{ transformOrigin: '98px 62px' }}
-          animate={{ rotate: status === 'win' ? [25, 0, 25] : status === 'oops' ? [-5, 5, -5] : 0 }}
+          animate={{ rotate: reducedMotion ? 0 : status === 'win' ? [25, 0, 25] : status === 'oops' ? [-5, 5, -5] : 0 }}
           transition={{ repeat: Number.POSITIVE_INFINITY, duration: status === 'win' ? 0.4 : 1.2 }}
         >
           <rect x="98" y="48" width="14" height="28" rx="7" fill={`url(#bodyGrad-${status})`} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />

@@ -2,19 +2,24 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const basePath = '/sudokeando/'
+
 export default defineConfig({
+  base: basePath,
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons.svg'],
+      registerType: 'prompt',
+      includeAssets: ['favicon.svg', 'pwa-icon.svg'],
       manifest: {
-        name: 'Sudokeando',
+        name: 'Sudokeando with hints',
         short_name: 'Sudokeando',
-        description: 'A fast and playful Sudoku experience.',
+        description: 'A fast and playful Sudoku experience with Easy-only hints.',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         lang: 'en',
+        start_url: basePath,
+        scope: basePath,
         icons: [
           {
             src: 'favicon.svg',
@@ -22,7 +27,7 @@ export default defineConfig({
             type: 'image/svg+xml',
           },
           {
-            src: 'icons.svg',
+            src: 'pwa-icon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any maskable',

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Globe, Moon, Play, Sparkles, Sun, Trophy } from 'lucide-react'
+import { formatTime } from '../lib/game'
 import { Mascot } from './Mascot'
 import { SUPPORTED_LANGUAGES, translations } from '../lib/i18n'
 import type { Difficulty, GameStats, Language, Theme } from '../types'
@@ -61,7 +62,7 @@ export function HomeScreen({
           type="button"
           className="theme-toggle"
           onClick={onThemeToggle}
-          aria-label={translation.modeLabel[theme]}
+          aria-label={translation.modeLabel[theme === 'dark' ? 'light' : 'dark']}
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           <span>{theme === 'dark' ? translation.lightMode : translation.darkMode}</span>
@@ -75,8 +76,6 @@ export function HomeScreen({
             <span>{translation.appTitle}</span>
           </div>
           <h1>{translation.homeTitle}</h1>
-          <p className="home-subtitle">{translation.homeSubtitle}</p>
-          <p className="home-description">{translation.homeDescription}</p>
 
           <div className="hero-actions">
             <button type="button" className="action-btn btn-primary play-btn" onClick={onPlay}>
@@ -86,7 +85,6 @@ export function HomeScreen({
             <div className="selection-card glass">
               <span className="selection-label">{translation.currentSelection}</span>
               <strong>{translation.difficultyNames[difficulty]}</strong>
-              <p>{translation.difficultyDescriptions[difficulty]}</p>
             </div>
           </div>
         </div>
@@ -95,12 +93,10 @@ export function HomeScreen({
           <div className="mascot-panel glass">
             <div className="panel-meta">
               <span>{translation.robotLabel}</span>
-              <p>{translation.robotIntro}</p>
             </div>
             <Mascot status="idle" className="mascot-large" message={translation.mascotMessages.idle} />
             <div className="robot-note">
               <strong>{translation.noHints}</strong>
-              <p>{translation.robotRules}</p>
             </div>
           </div>
         </div>
@@ -109,7 +105,6 @@ export function HomeScreen({
       <section className="difficulty-section">
         <div className="section-heading">
           <h2>{translation.difficultyLabel}</h2>
-          <p>{translation.difficultyDescription}</p>
         </div>
         <div className="difficulty-grid" role="radiogroup" aria-label={translation.difficultyLabel}>
           {levels.map((level) => (
@@ -118,11 +113,19 @@ export function HomeScreen({
               type="button"
               className={`glass diff-card ${difficulty === level ? 'selected' : ''}`}
               onClick={() => onDifficultyChange(level)}
+              tabIndex={difficulty === level ? 0 : -1}
+              onKeyDown={(event) => {
+                const offset = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key]
+                if (offset === undefined && event.key !== 'Home' && event.key !== 'End') return
+                event.preventDefault()
+                const index = event.key === 'Home' ? 0 : event.key === 'End' ? levels.length - 1 : (levels.indexOf(level) + (offset ?? 0) + levels.length) % levels.length
+                onDifficultyChange(levels[index])
+                event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')[index]?.focus()
+              }}
               role="radio"
               aria-checked={difficulty === level}
             >
               <h2>{translation.difficultyNames[level]}</h2>
-              <p>{translation.difficultyDescriptions[level]}</p>
             </button>
           ))}
         </div>
@@ -149,10 +152,4 @@ export function HomeScreen({
       </section>
     </motion.section>
   )
-}
-
-function formatTime(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`
 }

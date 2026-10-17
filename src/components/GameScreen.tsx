@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion'
 import { ChevronLeft, Globe, Moon, RotateCcw, Sun, Trash2, Zap } from 'lucide-react'
 import { Mascot } from './Mascot'
-import { SUPPORTED_LANGUAGES, translations } from '../lib/i18n'
+import { SUPPORTED_LANGUAGES, translations, feedback } from '../lib/i18n'
+import type { KeyboardEvent } from 'react'
 import type { Difficulty, Language, MascotStatus, PuzzleCell, Theme } from '../types'
 
 type TranslationSet = (typeof translations)[Language]
@@ -11,6 +12,7 @@ interface GameScreenProps {
   difficulty: Difficulty
   formatTime: (seconds: number) => string
   language: Language
+  mascotMessage: string
   mascotStatus: MascotStatus
   onBack: () => void
   onCellClick: (rowIndex: number, columnIndex: number) => void
@@ -29,6 +31,7 @@ export function GameScreen({
   difficulty,
   formatTime,
   language,
+  mascotMessage,
   mascotStatus,
   onBack,
   onCellClick,
@@ -43,6 +46,50 @@ export function GameScreen({
 }: GameScreenProps) {
   const currentCellValue =
     selectedCell === null ? null : board[selectedCell[0]]?.[selectedCell[1]]?.value ?? null
+
+  function focusCell(rowIndex: number, columnIndex: number) {
+    document
+      .querySelector<HTMLButtonElement>(
+        `[data-cell-id="${rowIndex}-${columnIndex}"]`,
+      )
+      ?.focus()
+  }
+
+  function handleCellKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    rowIndex: number,
+    columnIndex: number,
+  ) {
+    const keyActions: Record<string, [number, number]> = {
+      ArrowUp: [Math.max(rowIndex - 1, 0), columnIndex],
+      ArrowDown: [Math.min(rowIndex + 1, 8), columnIndex],
+      ArrowLeft: [rowIndex, Math.max(columnIndex - 1, 0)],
+      ArrowRight: [rowIndex, Math.min(columnIndex + 1, 8)],
+      Home: [rowIndex, 0],
+      End: [rowIndex, 8],
+    }
+
+    const nextCell = keyActions[event.key]
+
+    if (nextCell) {
+      event.preventDefault()
+      focusCell(nextCell[0], nextCell[1])
+      return
+    }
+
+    if (event.ctrlKey || event.metaKey || event.altKey) return
+
+    if (/^[1-9]$/.test(event.key)) {
+      event.preventDefault()
+      onInput(Number.parseInt(event.key, 10))
+      return
+    }
+
+    if (event.key === 'Backspace' || event.key === 'Delete' || event.key === '0') {
+      event.preventDefault()
+      onInput(null)
+    }
+  }
 
   return (
     <motion.section
@@ -76,7 +123,7 @@ export function GameScreen({
             type="button"
             className="theme-toggle compact-toggle"
             onClick={onThemeToggle}
-            aria-label={translation.modeLabel[theme]}
+            aria-label={translation.modeLabel[theme === 'dark' ? 'light' : 'dark']}
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -96,44 +143,65 @@ export function GameScreen({
         <Mascot
           status={mascotStatus}
           className="mascot-small"
-          message={translation.mascotMessages[mascotStatus]}
+          message={mascotMessage}
         />
       </div>
 
-      <div className="board glass" role="grid" aria-label={`${translation.boardLabel}: ${translation.difficultyNames[difficulty]}`}>
-        {board.map((row, rowIndex) =>
-          row.map((cell, columnIndex) => {
-            const isSelected =
-              selectedCell?.[0] === rowIndex && selectedCell?.[1] === columnIndex
-            const isRelatedToSelected =
-              selectedCell !== null &&
-              (selectedCell[0] === rowIndex ||
-                selectedCell[1] === columnIndex ||
-                (Math.floor(selectedCell[0] / 3) === Math.floor(rowIndex / 3) &&
-                  Math.floor(selectedCell[1] / 3) === Math.floor(columnIndex / 3)))
-            const isSameValue =
-              cell.value !== null &&
-              currentCellValue !== null &&
-              cell.value === currentCellValue
+      <div
+        className="board glass"
+        role="grid"
+        aria-colcount={9}
+        aria-rowcount={9}
+        aria-label={`${translation.boardLabel}: ${translation.difficultyNames[difficulty]}`}
+      >
+        {board.map((row, rowIndex) => (
+          <div className="board-row" role="row" key={rowIndex} aria-rowindex={rowIndex + 1}>
+            {row.map((cell, columnIndex) => {
+              const isSelected =
+                selectedCell?.[0] === rowIndex && selectedCell?.[1] === columnIndex
+              const isRelatedToSelected =
+                selectedCell !== null &&
+                (selectedCell[0] === rowIndex ||
+                  selectedCell[1] === columnIndex ||
+                  (Math.floor(selectedCell[0] / 3) === Math.floor(rowIndex / 3) &&
+                    Math.floor(selectedCell[1] / 3) === Math.floor(columnIndex / 3)))
+              const isSameValue =
+                cell.value !== null &&
+                currentCellValue !== null &&
+                cell.value === currentCellValue
+              const isTabStop =
+                isSelected || (selectedCell === null && rowIndex === 0 && columnIndex === 0)
 
-            return (
-              <button
-                key={`${rowIndex}-${columnIndex}`}
-                type="button"
-                className={`cell ${cell.initial ? 'initial' : 'user-input'} ${cell.error ? 'error' : ''} ${
-                  isSelected ? 'selected' : ''
-                } ${isRelatedToSelected ? 'active' : ''} ${isSameValue ? 'same-value' : ''}`}
-                onClick={() => onCellClick(rowIndex, columnIndex)}
-                aria-label={`${translation.row} ${rowIndex + 1}, ${translation.column} ${columnIndex + 1}${
-                  cell.value === null ? `, ${translation.emptyCell}` : `, ${translation.value} ${cell.value}`
-                }, ${cell.initial ? translation.fixedCell : translation.editableCell}`}
-                aria-pressed={isSelected}
-              >
-                {cell.value ?? ''}
-              </button>
-            )
-          }),
-        )}
+              return (
+                <button
+                  key={`${rowIndex}-${columnIndex}`}
+                  type="button"
+                  role="gridcell"
+                  className={`cell ${cell.initial ? 'initial' : 'user-input'} ${cell.error ? 'error' : ''} ${
+                    isSelected ? 'selected' : ''
+                  } ${isRelatedToSelected ? 'active' : ''} ${isSameValue ? 'same-value' : ''} ${
+                    columnIndex === 2 || columnIndex === 5 ? 'block-right' : ''
+                  } ${rowIndex === 2 || rowIndex === 5 ? 'block-bottom' : ''}`}
+                  data-cell-id={`${rowIndex}-${columnIndex}`}
+                  onFocus={() => onCellClick(rowIndex, columnIndex)}
+                  onClick={() => { if (!isSelected) onCellClick(rowIndex, columnIndex) }}
+                  onKeyDown={(event) => handleCellKeyDown(event, rowIndex, columnIndex)}
+                  aria-colindex={columnIndex + 1}
+                  aria-rowindex={rowIndex + 1}
+                  aria-selected={isSelected}
+                  aria-readonly={cell.initial}
+                  aria-invalid={cell.error || undefined}
+                  tabIndex={isTabStop ? 0 : -1}
+                  aria-label={`${translation.row} ${rowIndex + 1}, ${translation.column} ${columnIndex + 1}${
+                    cell.value === null ? `, ${translation.emptyCell}` : `, ${translation.value} ${cell.value}`
+                  }, ${cell.initial ? translation.fixedCell : translation.editableCell}${cell.error ? `, ${feedback[language].invalid}` : ''}`}
+                >
+                  {cell.value ?? ''}
+                </button>
+              )
+            })}
+          </div>
+        ))}
       </div>
 
       <div className="num-pad" aria-label={translation.boardLabel}>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Sudokeando</title>
+  <desc id="desc">A rounded Sudoku board icon with a central S mark.</desc>
+  <defs>
+    <linearGradient id="app-bg" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#12243a"/>
+      <stop offset="1" stop-color="#07111f"/>
+    </linearGradient>
+    <linearGradient id="board-stroke" x1="94" y1="86" x2="418" y2="426" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2dd4bf"/>
+      <stop offset=".55" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#f97316"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="42" y="48" width="428" height="436" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="22" stdDeviation="22" flood-color="#000" flood-opacity=".34"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#app-bg)"/>
+  <circle cx="402" cy="110" r="34" fill="#38bdf8" opacity=".92"/>
+  <circle cx="94" cy="410" r="46" fill="#f97316" opacity=".24"/>
+
+  <g filter="url(#soft-shadow)">
+    <rect x="82" y="78" width="348" height="356" rx="62" fill="#102033" stroke="url(#board-stroke)" stroke-width="18"/>
+    <path d="M198 88v336M314 88v336M92 198h328M92 314h328" stroke="#f97316" stroke-width="14" stroke-linecap="round" opacity=".95"/>
+    <path d="M157 148h42M313 148h42M151 256h48M313 256h42M157 366h42M313 366h42" stroke="#2dd4bf" stroke-width="18" stroke-linecap="round" opacity=".36"/>
+    <path d="M179 332c20 18 47 27 80 27 50 0 80-21 80-55 0-38-34-47-76-55-33-6-51-10-51-27 0-16 15-26 41-26 25 0 46 7 64 20" fill="none" stroke="#edf5ff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M214 137h84" stroke="#edf5ff" stroke-width="12" stroke-linecap="round" opacity=".78"/>
+  </g>
+</svg>

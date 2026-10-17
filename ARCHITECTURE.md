@@ -1,107 +1,53 @@
 # Architecture
 
-## Overview
+## Runtime modules
 
-Sudokeando is a client-side React application with a single entry point and no backend services. The app runs entirely in the browser and persists lightweight player statistics in `localStorage`.
+Sudokeando runs entirely in the browser, with no backend or player-data transmission. Vite serves it under `/sudokeando/` using local assets and system fonts.
 
-## Runtime Structure
+- `src/App.tsx`: screens, lifecycle, timing, preferences, and statistics integration.
+- `src/lib/game.ts`: pure board transformations, validation, legacy parsing, and time formatting.
+- `src/lib/sudoku.ts`: generation plus structural, clue, and solution checks.
+- `src/lib/storage.ts`: guarded preferences and transactional statistics.
+- `src/lib/i18n.ts`: typed translations and recovery/error/hint copy.
+- `src/lib/mascot.ts`: randomized Spanish/English commentary and native-language fallbacks for other locales.
+- `src/components/`: home, gameplay, and SVG mascot.
+- `src/index.css`: theme tokens, responsive layouts, focus, and error treatments.
+- `tests/`: domain, storage, and React interaction regressions.
 
-- `src/main.tsx`: bootstraps React and mounts the root application.
-- `src/App.tsx`: coordinates screen state, game lifecycle, puzzle generation, timer, persistence, and top-level handlers.
-- `src/components/Mascot.tsx`: renders the animated robot mascot and live status message.
-- `src/components/HomeScreen.tsx`: renders difficulty selection and progress summary.
-- `src/components/GameScreen.tsx`: renders the Sudoku board, number pad, timer, and in-game actions.
-- `src/lib/game.ts`: stores default stats, localStorage parsing, time formatting, and difficulty labels.
-- `src/lib/i18n.ts`: stores translated copy, supported languages, and theme/language storage keys.
-- `src/types.ts`: shared application types for stats, board cells, difficulty, and screen state.
-- `src/index.css`: defines the visual system, layout, responsive behavior, and component styling.
-- `public/`: static assets exposed by Vite.
-- `vite.config.ts`: Vite configuration plus Progressive Web App registration and manifest metadata.
+## Gameplay
 
-## Application Flow
+Starting validates a puzzle, creates its board, assigns a cryptographically random game ID, captures a start timestamp, and records the start. Fixed clues cannot be edited. Only Easy exposes solution values through empty-cell hints. Correctness is checked when the board is filled. Editing clears previous final-check error marks. Invalid cells expose textual/programmatic errors and wavy underlines.
 
-The app has two screens:
+A synchronous game ID guard stops duplicate completion handling. Winning records its result independently of decorative effects. The timer derives elapsed seconds from timestamps, including background time and sleep; the interval only refreshes its display. Completion recalculates the final result. Wall-clock adjustments can affect timing; negative elapsed values are clamped.
 
-1. `home`
-2. `game`
+## Atomic statistics
 
-The root component stores the active screen in React state and switches views with `AnimatePresence` from Framer Motion.
+IndexedDB database `sudokeando`, schema version 1, has two stores:
 
-## State Model
+- `stats`: aggregate under key `current`.
+- `games`: receipts keyed by game ID, storing difficulty and whether a win was counted.
 
-`src/App.tsx` manages runtime state with React hooks:
+Every event uses a readwrite transaction over both stores. The first transaction imports validated legacy `sudokeando_stats` if no aggregate exists. IndexedDB serializes overlapping transactions across tabs, preventing migration races and lost increments. Each ID adds played/won counts at most once. A win arriving before its start counts both once. Reusing an ID for another difficulty aborts. Promises resolve only after commit.
 
-- `screen`: current view (`home` or `game`)
-- `difficulty`: selected Sudoku difficulty
-- `board`: 9x9 matrix of puzzle cells
-- `solution`: flattened solution string returned by `sudoku-gen`
-- `selectedCell`: currently active board cell
-- `timer`: elapsed seconds for the current game
-- `gameActive`: whether input and timer are enabled
-- `stats`: aggregate local stats by difficulty
-- `mascotStatus`: mascot animation and message state
-- `language`: active UI locale
-- `theme`: active color theme (`dark` or `light`)
+The legacy localStorage key is retained without rewriting. BroadcastChannel sends change notifications only; tabs reread their local database. Same-window events and focus refresh also update totals. Messaging failure cannot turn a committed result into a duplicate fallback increment.
 
-## Sudoku Data Flow
+Storage failure leaves the game playable in memory with a localized notice. Unsaved fallback totals are not automatically reconciled after later recovery. Receipts are retained for idempotency and grow with games played.
 
-When a new game starts:
+## Preferences and accessibility
 
-1. `getSudoku(difficulty)` generates a puzzle and its solution.
-2. The puzzle string is converted into a 9x9 `board` matrix.
-3. Each cell is represented as `{ value, initial, error }`.
-4. The matching `solution` string is stored for validation.
-5. The selected difficulty's `played` counter is incremented.
+Preference access catches storage exceptions. Language, title, and theme still follow React state when preferences cannot persist. Locale changes immediately regenerate the mascot message. Theme labels describe the destination mode.
 
-When the player enters a value:
+The grid has one tab stop and focus-driven selection. Arrows/Home/End navigate; digits enter values; Delete/Backspace/0 clear. Modified browser shortcuts are preserved. Difficulty radios support roving focus and arrows/Home/End. Errors use programmatic and non-color cues. CSS float, Framer Motion keyframes, screen movement, and confetti respect reduced-motion preferences.
 
-1. The selected cell is validated against the stored solution.
-2. The cell is marked with `error` when the value is wrong.
-3. The mascot status changes to `happy` or `oops`.
-4. The board is scanned for completion.
-5. On success, the app stops the timer, triggers confetti, and updates best-time statistics.
+## Delivery
 
-## Persistence
+The build runs TypeScript, Vite, and PWA worker generation. Downloaded updates wait for app tabs/windows to close instead of forcing activation during gameplay.
 
-- Storage mechanism: browser `localStorage`
-- Storage key: `sudokeando_stats`
-- Additional keys: `sudokeando_language`, `sudokeando_theme`
-- Saved data: played count, won count, and best time for each difficulty
-- Parsing strategy: validated through `parseStoredStats()` before hydrating React state
+The verification workflow pins action SHAs, limits permissions to read-only contents, disables checkout credential persistence, cancels superseded runs, and bounds job duration. It installs from the lockfile, lints, tests, builds, and audits dependencies.
 
-No other client persistence layer exists.
+## Remaining limits
 
-## UI Composition
-
-The UI is now split into focused modules:
-
-- `Mascot`: animated SVG robot and speech bubble
-- `HomeScreen`: redesigned landing page, theme/language controls, difficulty selection, and progress summary
-- `GameScreen`: board, keypad, timer, navigation, and compact theme/language controls
-- `App`: orchestration, state ownership, and integration logic
-
-Interactive controls use semantic buttons, visible focus states, and status announcements for basic accessibility support.
-Theme selection is applied through `document.documentElement.dataset.theme`, and translated copy is resolved from a local dictionary layer.
-
-## External Dependencies
-
-- `react` and `react-dom`: rendering and state management
-- `framer-motion`: screen and mascot animations
-- `sudoku-gen`: puzzle and solution generation
-- `lucide-react`: icons
-- `canvas-confetti`: win animation
-- `vite-plugin-pwa`: service worker registration and manifest generation
-
-## Build and Delivery
-
-- Bundler: Vite
-- Language: TypeScript
-- Linting: ESLint
-- Package manager lockfile: `package-lock.json`
-- Output directory: `dist/`
-
-## Known Technical Debt
-
-- Restart and exit flows still depend on blocking `window.confirm()` dialogs.
-- Board navigation is click-based; there is no arrow-key movement model for Sudoku cells yet.
-- Game rules and board transformations are still embedded in the React layer rather than a pure game engine module.
+- Active puzzles are not persisted across reloads.
+- Restart/exit use native confirmation dialogs.
+- Browser policy/quota governs persistence; failure is visible.
+- Simulated DOM/storage tests do not certify real-device rendering, performance, WCAG conformance, PWA installation, or offline recovery.

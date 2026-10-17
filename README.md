@@ -1,60 +1,50 @@
 # Sudokeando
 
-Sudokeando is a single-page Sudoku game built with React, TypeScript, and Vite. It combines a mobile-friendly board, animated transitions, persistent local stats, and a reactive robot mascot to make Sudoku feel more playful than a standard puzzle app.
-
-![Sudokeando Preview](https://raw.githubusercontent.com/gafapa/sudokeando/main/public/preview.png)
+A local Sudoku game built with React, TypeScript, and Vite, with four difficulty levels and direct robot hints only on Easy.
 
 ## Features
 
-- Four difficulty levels: `easy`, `medium`, `hard`, and `expert`
-- Two-screen flow: home screen and in-game screen
-- Reactive SVG mascot with humorous commentary instead of gameplay hints
-- Local progress tracking with wins, games played, and best time per difficulty
-- Light and dark theme toggle persisted in local storage
-- Internationalized interface for Spanish, Galician, English, French, German, Portuguese, Catalan, and Basque
-- Reset and in-game timer controls
-- Victory confetti and animated UI transitions
-- Keyboard-accessible controls for difficulty cards, board cells, and actions
-- PWA setup through `vite-plugin-pwa` using shipped SVG assets
+- Validated generated puzzles and final-only correctness checking.
+- Keyboard entry, arrow navigation, clearing, and accessible difficulty controls.
+- Error descriptions, non-color error marks, and reduced-motion alternatives.
+- Spanish, Galician, English, French, German, Portuguese, Catalan, and Basque.
+- Light/dark themes with readable primary actions.
+- Transactional statistics, legacy data migration, cross-tab updates, and duplicate-win protection.
+- Elapsed-time records that include background time and device sleep.
+- PWA build with waiting updates that do not force a reload during play.
+- No backend, analytics, external fonts, or runtime AI requests.
 
-## Tech Stack
+## Development
 
-- React 19
-- TypeScript 5
-- Vite 8
-- Framer Motion
-- Lucide React
-- sudoku-gen
-- canvas-confetti
-- vite-plugin-pwa
+Use Node.js 24 or later:
 
-## Getting Started
-
-```bash
-npm install
+```sh
+npm ci
 npm run dev
 ```
 
-The local development server runs on `http://localhost:5173` by default.
+Open `http://localhost:5173/sudokeando/`. Production also uses the `/sudokeando/` base path.
 
-## Available Scripts
+```sh
+npm run lint
+npm test
+npm run build
+npm audit --audit-level=low
+npm run preview
+```
 
-- `npm run dev`: start the Vite development server
-- `npm run build`: run TypeScript project build and create a production bundle
-- `npm run lint`: run ESLint
-- `npm run preview`: preview the production build locally
+Tests use Node's test runner, tsx, jsdom, and fake-indexeddb. They cover puzzle generation, statistics parsing, migration races, concurrent writes, duplicate receipts, rollback, blocked storage, keyboard entry, and difficulty selection. The pinned GitHub Actions workflow runs these quality checks; local success is separate from hosted CI success.
 
-## Project Documentation
+## Data and recovery
 
-- [ARCHITECTURE.md](./ARCHITECTURE.md): current application structure and runtime behavior
-- [RULES.md](./RULES.md): repository conventions for code and documentation changes
+Statistics stay in IndexedDB database `sudokeando`. The existing `sudokeando_stats` localStorage entry is imported once inside a transaction and retained as a migration source. Preferences remain in localStorage. If browser storage is unavailable, playing remains possible and a translated notice explains the persistence limitation.
 
-## Current Limitations
+Active puzzles exist in memory. Reloading or closing loses the current puzzle. Restart creates another puzzle and counts another game. Exiting during play asks for confirmation.
 
-- The app still relies on browser `confirm()` dialogs for restart and menu-exit flows.
-- Sudoku validation and board generation logic still live in the client application instead of dedicated domain modules.
-- The game currently supports pointer input only on the board itself; direct keyboard navigation between Sudoku cells is not implemented yet.
+PWA updates wait until all open app tabs/windows close. Installation, offline startup, and real-device rendering still require browser/device qualification.
 
-## Repository
+## Documentation
 
-- Remote: [https://github.com/gafapa/sudokeando](https://github.com/gafapa/sudokeando)
+- [ARCHITECTURE.md](ARCHITECTURE.md): runtime, transactions, and remaining limits.
+- [PROJECT_REVIEW.md](PROJECT_REVIEW.md): original audit and remediation evidence.
+- [RULES.md](RULES.md): repository conventions.
