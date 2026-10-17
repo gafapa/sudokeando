@@ -39,6 +39,14 @@ Preference access catches storage exceptions. Language, title, and theme still f
 
 The grid has one tab stop and focus-driven selection. Arrows/Home/End navigate; digits enter values; Delete/Backspace/0 clear. Modified browser shortcuts are preserved. Difficulty radios support roving focus and arrows/Home/End. Errors use programmatic and non-color cues. CSS float, Framer Motion keyframes, screen movement, and confetti respect reduced-motion preferences.
 
+## Viewport layout
+
+The shell uses dynamic viewport height and safe-area padding. Its content occupies the remaining flex space, including when persistence notices appear. Home uses a bounded grid and shows statistics for the selected difficulty instead of four duplicate panels. Very small portrait layouts omit decorative idle commentary while preserving the Easy-only hint rule.
+
+The game has a size-query container for the board. Container width and height determine a square board that fits the available rectangle. Wide screens place status, mascot commentary, and keypad beside the board; narrow portrait screens place the keypad below it. Short landscape layouts use compact side controls. Restart is always available in the top toolbar. Screen transitions use opacity to avoid transient overflow.
+
+Chrome measurements covered five viewports (320x480, 390x844, 568x320, 768x512, 1280x720), eight languages, and both screens. All 80 combinations had no horizontal or vertical page overflow; the home checks also verified hero contents did not overlap adjacent rows. Extreme zoom, untested viewport sizes, and physical-device browser chrome remain outside this evidence.
+
 ## Delivery
 
 The build runs TypeScript, Vite, and PWA worker generation. Downloaded updates wait for app tabs/windows to close instead of forcing activation during gameplay.

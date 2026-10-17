@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Globe, Moon, Play, Sparkles, Sun, Trophy } from 'lucide-react'
+import { Globe, Moon, Play, Sun, Trophy } from 'lucide-react'
 import { formatTime } from '../lib/game'
 import { Mascot } from './Mascot'
 import { SUPPORTED_LANGUAGES, translations } from '../lib/i18n'
@@ -35,13 +35,12 @@ export function HomeScreen({
   return (
     <motion.section
       className="home-screen home-stage"
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -24 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
       <div className="home-controls glass">
         <label className="selector-group">
-          <span>{translation.language}</span>
           <div className="selector-field">
             <Globe size={16} />
             <select
@@ -71,29 +70,17 @@ export function HomeScreen({
 
       <div className="home-hero">
         <div className="hero-copy">
-          <div className="eyebrow">
-            <Sparkles size={16} />
-            <span>{translation.appTitle}</span>
-          </div>
           <h1>{translation.homeTitle}</h1>
 
           <div className="hero-actions">
             <button type="button" className="action-btn btn-primary play-btn" onClick={onPlay}>
               <Play size={24} fill="currentColor" /> {translation.play}
             </button>
-
-            <div className="selection-card glass">
-              <span className="selection-label">{translation.currentSelection}</span>
-              <strong>{translation.difficultyNames[difficulty]}</strong>
-            </div>
           </div>
         </div>
 
         <div className="hero-side">
           <div className="mascot-panel glass">
-            <div className="panel-meta">
-              <span>{translation.robotLabel}</span>
-            </div>
             <Mascot status="idle" className="mascot-large" message={translation.mascotMessages.idle} />
             <div className="robot-note">
               <strong>{translation.noHints}</strong>
@@ -133,21 +120,12 @@ export function HomeScreen({
 
       <section className="stats-container" aria-labelledby="stats-heading">
         <h2 id="stats-heading" className="stats-heading">
-          <Trophy size={20} /> {translation.progress}
+          <Trophy size={18} /> {translation.progress} <span className="stats-level">{translation.difficultyNames[difficulty]}</span>
         </h2>
-        <div className="stats-grid">
-          {levels.map((level) => (
-            <article key={level} className="stat-item glass">
-              <div className="stat-info">
-                <h3>{translation.difficultyNames[level]}</h3>
-                <p className="stat-copy">{stats[level].won} {translation.wins}</p>
-              </div>
-              <div className="stat-val">
-                <div className="stat-strong">{stats[level].played} {translation.games}</div>
-                <div className="stat-copy">{translation.best}: {stats[level].bestTime === null ? '--:--' : formatTime(stats[level].bestTime)}</div>
-              </div>
-            </article>
-          ))}
+        <div className="stats-summary" aria-label={translation.difficultyNames[difficulty]}>
+          <div className="stat-metric"><strong>{stats[difficulty].won}</strong><span>{translation.wins}</span></div>
+          <div className="stat-metric"><strong>{stats[difficulty].played}</strong><span>{translation.games}</span></div>
+          <div className="stat-metric"><strong>{stats[difficulty].bestTime === null ? '--:--' : formatTime(stats[difficulty].bestTime)}</strong><span>{translation.best}</span></div>
         </div>
       </section>
     </motion.section>

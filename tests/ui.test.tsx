@@ -64,8 +64,10 @@ test('initial Tab focus accepts digits, arrow navigation, deletion, and preserve
 test('difficulty radios support arrows and theme labels name the destination', async () => {
   function Harness() {
     const [difficulty, setDifficulty] = useState<Difficulty>('easy')
+    const stats = createDefaultStats()
+    stats.medium = { played: 7, won: 2, bestTime: 100 }
     return <HomeScreen difficulty={difficulty} language="en" theme="light" translation={translations.en}
-      stats={createDefaultStats()} onDifficultyChange={setDifficulty} onPlay={noAction} onThemeToggle={noAction} onLanguageChange={noAction} />
+      stats={stats} onDifficultyChange={setDifficulty} onPlay={noAction} onThemeToggle={noAction} onLanguageChange={noAction} />
   }
   root = createRoot(container)
   await act(async () => root!.render(<Harness />))
@@ -76,6 +78,7 @@ test('difficulty radios support arrows and theme labels name the destination', a
   assert.equal(radios[0].tabIndex, -1)
   assert.equal(document.activeElement, radios[1])
   assert.equal(container.querySelector('.theme-toggle')?.getAttribute('aria-label'), 'Dark mode')
+  assert.deepEqual([...container.querySelectorAll('.stat-metric strong')].map((element) => element.textContent), ['2', '7', '1:40'])
 })
 
 test('full gameplay validates only at completion and records exactly one victory', async () => {

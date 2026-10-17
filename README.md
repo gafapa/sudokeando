@@ -9,6 +9,7 @@ A local Sudoku game built with React, TypeScript, and Vite, with four difficulty
 - Error descriptions, non-color error marks, and reduced-motion alternatives.
 - Spanish, Galician, English, French, German, Portuguese, Catalan, and Basque.
 - Light/dark themes with readable primary actions.
+- Viewport-sized home and game layouts, a square board sized to available space, and landscape side controls without page scrolling at qualified sizes.
 - Transactional statistics, legacy data migration, cross-tab updates, and duplicate-win protection.
 - Elapsed-time records that include background time and device sleep.
 - PWA build with waiting updates that do not force a reload during play.
@@ -41,7 +42,7 @@ Statistics stay in IndexedDB database `sudokeando`. The existing `sudokeando_sta
 
 Active puzzles exist in memory. Reloading or closing loses the current puzzle. Restart creates another puzzle and counts another game. Exiting during play asks for confirmation.
 
-PWA updates wait until all open app tabs/windows close. Installation, offline startup, and real-device rendering still require browser/device qualification.
+PWA updates wait until all open app tabs/windows close. Chrome viewport checks cover both screens at 320x480, 390x844, 568x320, 768x512, and 1280x720 in all eight languages: 80 combinations without page overflow. These are desktop-browser viewport checks, not physical-device tests. PWA installation and offline startup still require qualification.
 
 ## Documentation
 
