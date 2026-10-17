@@ -165,7 +165,7 @@ export function GameScreen({
                     key={`${rowIndex}-${columnIndex}`}
                     type="button"
                     role="gridcell"
-                    className={`cell ${cell.initial ? 'initial' : 'user-input'} ${cell.error ? 'error' : ''} ${
+                    className={`cell ${(Math.floor(rowIndex / 3) + Math.floor(columnIndex / 3)) % 2 === 0 ? 'block-tint' : ''} ${cell.initial ? 'initial' : 'user-input'} ${cell.error ? 'error' : ''} ${
                       isSelected ? 'selected' : ''
                     } ${isRelatedToSelected ? 'active' : ''} ${isSameValue ? 'same-value' : ''} ${
                       columnIndex === 2 || columnIndex === 5 ? 'block-right' : ''

@@ -4,6 +4,8 @@ Date: 2026-10-17
 
 ## Remediation update
 
+A subsequent graphics pass introduced local Nunito Sans typography, alternating block shading, larger tabular numerals, distinct player-entry colors, clearer selection, soft control elevation, and difficulty indicators. Local lint, all 20 regressions, and the complete PWA build pass. Gameplay was measured at 320x480, 568x320, and 1280x720 in both themes without page overflow. Calculated contrast is 5.47:1 for selected-cell text, 4.73:1 for light-theme entries on related cells, and 6.00:1 for dark-theme entries on matching-value cells. Both WOFF2 assets and their license are present in the generated precache. Current screenshots include both themes.
+
 Follow-up interface work recovered Chrome access and qualified viewport-fitting layouts. Both screens passed 80 viewport/locale combinations (five sizes, eight languages, two screens) with no page overflow. Home hero content also remained within its allocated row after fixing a small-screen overlap. The game keeps a square board and switches between bottom and side controls. Selected-difficulty statistics replace four repeated panels; restart moved into the toolbar. Browser screenshots are available in `docs/screenshots/`. Physical-device/PWA qualification remains separate. This evidence supersedes the browser-timeout limitation recorded below.
 
 The findings below describe the original audit. Subsequent remediation updated the dependency graph (including Vite 8.3.4, React 19.3.1, and ESLint 10.13.0), moved statistics into atomic IndexedDB transactions with idempotent receipts, guarded preference storage, and added a visible persistence-failure notice. The legacy statistics key is migrated once and retained.

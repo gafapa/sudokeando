@@ -2,7 +2,7 @@
 
 ## Runtime modules
 
-Sudokeando runs entirely in the browser, with no backend or player-data transmission. Vite serves it under `/sudokeando/` using local assets and system fonts.
+Sudokeando runs entirely in the browser, with no backend or player-data transmission. Vite serves it under `/sudokeando/` using local assets, bundled Nunito Sans, and system font fallbacks.
 
 - `src/App.tsx`: screens, lifecycle, timing, preferences, and statistics integration.
 - `src/lib/game.ts`: pure board transformations, validation, legacy parsing, and time formatting.
@@ -48,6 +48,10 @@ The game has a size-query container for the board. Container width and height de
 Chrome measurements covered five viewports (320x480, 390x844, 568x320, 768x512, 1280x720), eight languages, and both screens. All 80 combinations had no horizontal or vertical page overflow; the home checks also verified hero contents did not overlap adjacent rows. Extreme zoom, untested viewport sizes, and physical-device browser chrome remain outside this evidence.
 
 ## Delivery
+
+The visual layer uses theme-specific board, block, entry, selection, and elevation tokens. Alternating 3x3 block shading complements stronger block boundaries. Given clues and player entries differ in weight and color; selection and invalid states remain explicit. Difficulty marks are decorative and hidden from assistive technology.
+
+Two variable WOFF2 font subsets cover Latin and Latin Extended. Their combined size is approximately 59 kB. Vite fingerprints them, and the PWA explicitly precaches WOFF2 files plus the bundled SIL Open Font License. No runtime requests go to Google Fonts or another font CDN. Font sources and attribution are recorded in `THIRD_PARTY.md`.
 
 The build runs TypeScript, Vite, and PWA worker generation. Downloaded updates wait for app tabs/windows to close instead of forcing activation during gameplay.
 

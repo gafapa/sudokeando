@@ -8,12 +8,13 @@ A local Sudoku game built with React, TypeScript, and Vite, with four difficulty
 - Keyboard entry, arrow navigation, clearing, and accessible difficulty controls.
 - Error descriptions, non-color error marks, and reduced-motion alternatives.
 - Spanish, Galician, English, French, German, Portuguese, Catalan, and Basque.
-- Light/dark themes with readable primary actions.
+- Refined light/dark themes, shaded 3x3 blocks, distinct player entries, and high-contrast cell selection.
+- Bundled Nunito Sans typography, soft control shadows, and visual difficulty indicators.
 - Viewport-sized home and game layouts, a square board sized to available space, and landscape side controls without page scrolling at qualified sizes.
 - Transactional statistics, legacy data migration, cross-tab updates, and duplicate-win protection.
 - Elapsed-time records that include background time and device sleep.
 - PWA build with waiting updates that do not force a reload during play.
-- No backend, analytics, external fonts, or runtime AI requests.
+- No backend, analytics, remote font requests, or runtime AI requests.
 
 ## Development
 
@@ -49,3 +50,4 @@ PWA updates wait until all open app tabs/windows close. Chrome viewport checks c
 - [ARCHITECTURE.md](ARCHITECTURE.md): runtime, transactions, and remaining limits.
 - [PROJECT_REVIEW.md](PROJECT_REVIEW.md): original audit and remediation evidence.
 - [RULES.md](RULES.md): repository conventions.
+- [THIRD_PARTY.md](THIRD_PARTY.md): bundled font attribution and license.

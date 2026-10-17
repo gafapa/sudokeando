@@ -113,6 +113,9 @@ export function HomeScreen({
               aria-checked={difficulty === level}
             >
               <h2>{translation.difficultyNames[level]}</h2>
+              <span className="level-mark" aria-hidden="true">
+                {[0, 1, 2, 3].map((step) => <span key={step} className={step <= levels.indexOf(level) ? 'is-filled' : ''} />)}
+              </span>
             </button>
           ))}
         </div>
